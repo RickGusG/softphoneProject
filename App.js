@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { WebSocketInterface } from 'jssip'
+import JsSIP from 'jssip'
 import SoftPhone from 'react-softphone';
 
 const CustomButton = ({text, color, action}) => {
@@ -13,56 +13,49 @@ const CustomButton = ({text, color, action}) => {
 
 const CallComponent = () => {
 
-  const [isInCall, setIsInCall] = useState(false)
+  const [isInCall, setIsInCall] = useState(true)
   const [mute, setMute] = useState(true)
 
-  const config = {
-    domain: '192.168.15.104', // sip-server@your-domain.io
-    uri: '10@192.168.15.104', // sip:sip-user@your-domain.io
-    password: 'xcom0615', //  PASSWORD ,
-    ws_servers: 'wss://10@192.168.15.104:8089/ws', //ws server
-    sockets: new WebSocketInterface('wss://192.168.15.104:8089/ws'),
-    display_name: 'Android',//jssip Display Name
-    debug: false // Turn debug messages on
- 
+  const socket = new JsSIP.WebSocketInterface('wss://192.168.15.104');
+  const configuration = {
+    sockets  : [ socket ],
+    uri      : '10@192.168.15.104',
+    password : 'xcom0615',
+    display_name: 'Android'
   };
 
-  const setConnectOnStartToLocalStorage = (newValue) => {
-  // Handle save the auto connect value to local storage
-  return true
-  }
-  const setNotifications = (newValue) => {
-  // Handle save the Show notifications of an incoming call to local storage
-  return true
-  }
-  const setCallVolume = (newValue) => {
-  // Handle save the call Volume value to local storage
-  return true
-  }
-  const setRingVolume = (newValue) => {
-  // Handle save the Ring Volume value to local storage
-  return true
-  }
+  const ua = new JsSIP.UA(configuration);
+
+  ua.start();
+
+  // Register callbacks to desired call events
+  const eventHandlers = {
+    'progress': () => {
+      console.log('call is in progress');
+    },
+    'failed': (e) => {
+      console.log('call failed with cause: '+ e.data.cause);
+    },
+    'ended': (e) => {
+      console.log('call ended with cause: '+ e.data.cause);
+    },
+    'confirmed': () => {
+      console.log('call confirmed');
+    }
+  };
+
+  const options = {
+    'eventHandlers'    : eventHandlers,
+    'mediaConstraints' : { 'audio': true, 'video': false }
+  };
 
   return (
     <View style={style.defaultView}>
-      <CustomButton text={isInCall ? 'open' : 'answer'} color='limegreen' />
+      <CustomButton action={() => ua.call('20@192.168.15.104', options)} text={isInCall ? 'open' : 'answer'} color='limegreen' />
       <CustomButton text='reject' color='crimson' />
       { isInCall && 
         <CustomButton action={() => setMute(!mute)} text={mute ? 'unmute' : 'mute'} color='royalblue' /> 
       }
-      <SoftPhone
-        callVolume={33} //Set Default callVolume
-        ringVolume={44} //Set Default ringVolume
-        connectOnStart={false} //Auto connect to sip
-        notifications={false} //Show Browser Notification of an incoming call
-        config={config} //Voip config
-        setConnectOnStartToLocalStorage={setConnectOnStartToLocalStorage} // Callback function
-        setNotifications={setNotifications} // Callback function
-        setCallVolume={setCallVolume} // Callback function
-        setRingVolume={setRingVolume} // Callback function
-        timelocale={'UTC-3'} //Set time local for call history
-      />
     </View>
   )
 
