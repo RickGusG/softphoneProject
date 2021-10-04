@@ -1,7 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import JsSIP from 'jssip'
-import SoftPhone from 'react-softphone';
+import {
+  mediaDevices,
+  MediaStream,
+  MediaStreamTrack,
+  RTCIceCandidate,
+  RTCPeerConnection,
+  RTCSessionDescription,
+} from 'react-native-webrtc';
+
+window.RTCPeerConnection = window.RTCPeerConnection || RTCPeerConnection;
+window.RTCIceCandidate = window.RTCIceCandidate || RTCIceCandidate;
+window.RTCSessionDescription = window.RTCSessionDescription || RTCSessionDescription;
+window.MediaStream = window.MediaStream || MediaStream;
+window.MediaStreamTrack = window.MediaStreamTrack || MediaStreamTrack;
+window.navigator.mediaDevices = window.navigator.mediaDevices || mediaDevices;
+window.navigator.getUserMedia = window.navigator.getUserMedia || mediaDevices.getUserMedia;
 
 const CustomButton = ({text, color, action}) => {
   return (
@@ -11,22 +26,32 @@ const CustomButton = ({text, color, action}) => {
   )
 }
 
-const CallComponent = () => {
-
+const App = () => {
   const [isInCall, setIsInCall] = useState(true)
   const [mute, setMute] = useState(true)
 
-  const socket = new JsSIP.WebSocketInterface('wss://192.168.15.104');
+  const socket = new JsSIP.WebSocketInterface('ws://192.168.15.104/ws');
   const configuration = {
     sockets  : [ socket ],
-    uri      : '10@192.168.15.104',
+    uri      : 'sip:10@192.168.15.104',
     password : 'xcom0615',
-    display_name: 'Android'
+    display_name: 'Android',
+    authorization_user: '10',
   };
 
   const ua = new JsSIP.UA(configuration);
 
-  ua.start();
+  ua.on('unregistered', () => {
+    console.log("client unregistered");
+  });
+
+  ua.on('progress', () => {
+      console.log("progress");
+  });
+
+  ua.on('registered', () => {             
+      console.log("client registered");
+  });  
 
   // Register callbacks to desired call events
   const eventHandlers = {
@@ -48,7 +73,6 @@ const CallComponent = () => {
     'eventHandlers'    : eventHandlers,
     'mediaConstraints' : { 'audio': true, 'video': false }
   };
-
   return (
     <View style={style.defaultView}>
       <CustomButton action={() => ua.call('20@192.168.15.104', options)} text={isInCall ? 'open' : 'answer'} color='limegreen' />
@@ -58,13 +82,6 @@ const CallComponent = () => {
       }
     </View>
   )
-
-}
-
-const App = () => {
-  return (
-    <CallComponent />
-  );
 };
 
 const style = StyleSheet.create({
