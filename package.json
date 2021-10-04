@@ -10,8 +10,10 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "jssip": "^3.8.2",
     "react": "17.0.2",
-    "react-native": "0.66.0"
+    "react-native": "0.66.0",
+    "react-softphone": "^1.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.9",
