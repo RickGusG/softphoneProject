@@ -30,16 +30,17 @@ const App = () => {
   const [isInCall, setIsInCall] = useState(true)
   const [mute, setMute] = useState(true)
 
-  const socket = new JsSIP.WebSocketInterface('ws://192.168.15.104/ws');
+  const socket = new JsSIP.WebSocketInterface('wss://192.168.15.104/ws');
   const configuration = {
     sockets  : [ socket ],
     uri      : 'sip:10@192.168.15.104',
     password : 'xcom0615',
     display_name: 'Android',
-    authorization_user: '10',
   };
 
   const ua = new JsSIP.UA(configuration);
+
+  ua.start()
 
   ua.on('unregistered', () => {
     console.log("client unregistered");
@@ -51,7 +52,13 @@ const App = () => {
 
   ua.on('registered', () => {             
       console.log("client registered");
-  });  
+  });
+
+  ua.on('newRTCSession', (data) => {
+    const originator = data.originator;
+    const session = data.session;
+    const request = data.request;
+  })
 
   // Register callbacks to desired call events
   const eventHandlers = {
@@ -73,6 +80,12 @@ const App = () => {
     'eventHandlers'    : eventHandlers,
     'mediaConstraints' : { 'audio': true, 'video': false }
   };
+
+  const connection = ua.isConnected()
+  const register = ua.isRegistered()
+
+  console.log(`connection = ${connection} | register = ${register}`)
+
   return (
     <View style={style.defaultView}>
       <CustomButton action={() => ua.call('20@192.168.15.104', options)} text={isInCall ? 'open' : 'answer'} color='limegreen' />
