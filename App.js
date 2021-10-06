@@ -30,46 +30,63 @@ const App = () => {
   const [isInCall, setIsInCall] = useState(true)
   const [mute, setMute] = useState(true)
 
-  const socket = new JsSIP.WebSocketInterface('wss://192.168.15.104/ws');
+  const socket = new JsSIP.WebSocketInterface('ws://192.168.15.104:8088/asterisk/ws');
   const configuration = {
-    sockets  : [ socket ],
-    uri      : 'sip:10@192.168.15.104',
-    password : 'xcom0615',
+    sockets: [ socket ],
+    uri: 'sip:10@192.168.15.104:5060',
+    password: 'xcom0615',
     display_name: 'Android',
   };
 
   const ua = new JsSIP.UA(configuration);
 
   ua.start()
+  ua.register()
+
+  ua.on('connecting', () => {
+    console.log("connecting");
+  });
+
+  ua.on('connected', () => {
+    console.log("connected");
+  });
+
+  ua.on('disconnected', (data) => {
+    console.log('disconnected');
+  });
 
   ua.on('unregistered', () => {
     console.log("client unregistered");
   });
 
   ua.on('progress', () => {
-      console.log("progress");
+    console.log("progress");
   });
 
   ua.on('registered', () => {             
-      console.log("client registered");
+    console.log("client registered");
   });
 
-  ua.on('newRTCSession', (data) => {
-    const originator = data.originator;
-    const session = data.session;
-    const request = data.request;
+  ua.on('registrationFailed', (data) => {
+    console.error('registration failed:', data)
   })
 
-  // Register callbacks to desired call events
+  ua.on('newRTCSession', (data) => {
+    const {originator, session, request} = data;
+    console.log(originator, session, request)
+  })
+
   const eventHandlers = {
     'progress': () => {
       console.log('call is in progress');
     },
     'failed': (e) => {
-      console.log('call failed with cause: '+ e.data.cause);
+      const {cause} = e
+      console.error('call failed with cause: '+ cause);
     },
     'ended': (e) => {
-      console.log('call ended with cause: '+ e.data.cause);
+      const {cause} = e
+      console.log('call ended with cause: '+ cause);
     },
     'confirmed': () => {
       console.log('call confirmed');
@@ -81,14 +98,9 @@ const App = () => {
     'mediaConstraints' : { 'audio': true, 'video': false }
   };
 
-  const connection = ua.isConnected()
-  const register = ua.isRegistered()
-
-  console.log(`connection = ${connection} | register = ${register}`)
-
   return (
     <View style={style.defaultView}>
-      <CustomButton action={() => ua.call('20@192.168.15.104', options)} text={isInCall ? 'open' : 'answer'} color='limegreen' />
+      <CustomButton action={() => ua.call('20@192.168.15.104:5060', options)} text={isInCall ? 'open' : 'answer'} color='limegreen' />
       <CustomButton text='reject' color='crimson' />
       { isInCall && 
         <CustomButton action={() => setMute(!mute)} text={mute ? 'unmute' : 'mute'} color='royalblue' /> 
