@@ -55,9 +55,7 @@ const App = () => {
     if (connected) ua.register()
   }, [])
 
-  ua.on('connecting', () => {
-    console.log("connecting");
-  });
+  ua.on('connecting', () => console.log("connecting"))
 
   ua.on('connected', () => {
     console.log("connected");
@@ -74,18 +72,14 @@ const App = () => {
     setReistered(false)
   });
 
-  ua.on('progress', () => {
-    console.log("progress");
-  });
+  ua.on('progress', () => console.log("progress"))
 
   ua.on('registered', () => {             
     console.log("client registered");
     setReistered(true)
   });
 
-  ua.on('registrationFailed', (data) => {
-    console.error('registration failed:', data)
-  })
+  ua.on('registrationFailed', (data) => console.error('registration failed:', data))
 
   ua.on('newRTCSession', (data) => {
     const {session} = data;
@@ -122,8 +116,8 @@ const App = () => {
   })
 
   const answerCall = () => {
-    console.log(session.answer)
-    console.log(session.answer(options))
+    console.log('trying to answer')
+    session.answer(options)
   }
 
   const rejectOrHangupCall = () => {
