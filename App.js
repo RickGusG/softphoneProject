@@ -32,13 +32,14 @@ const App = () => {
   const [session, setSession] = useState(null)
   const [connected, setConnected] = useState(false)
   const [registered, setReistered] = useState(false)
+  const sipURL = '10.15.0.74'
 
-  const socket = new JsSIP.WebSocketInterface('ws://192.168.15.104:8088/asterisk/ws');
+  const socket = new JsSIP.WebSocketInterface(`ws://${sipURL}:8088/asterisk/ws`);
   const configuration = {
     sockets: [ socket ],
-    uri: 'sip:10@192.168.15.104:5060',
+    uri: `sip:20@${sipURL}:5060`,
     password: 'xcom0615',
-    display_name: 'Android',
+    display_name: 'Diogo PC',
   };
 
   const ua = new JsSIP.UA(configuration);
@@ -47,6 +48,13 @@ const App = () => {
     mediaConstraints: {
       audio: true,
       video: false
+    },
+    pcConfig: {
+      iceServers: [
+          { urls: ["stun:stun.l.google.com:19302"] }
+      ],
+      iceTransportPolicy: "all",
+      rtcpMuxPolicy: "negotiate"
     }
   }
 
@@ -62,8 +70,8 @@ const App = () => {
     setConnected(true)
   });
 
-  ua.on('disconnected', () => {
-    console.log('disconnected');
+  ua.on('disconnected', (e) => {
+    console.log('disconnected', e);
     setConnected(false)
   });
 
@@ -100,7 +108,7 @@ const App = () => {
       session.on('accepted', () => console.log('call accepted'))
 
       session.on('failed', (data) => {
-        console.log('call failed:', data)
+        console.error('call failed:', data)
         setIsInCall(false)
         setIsReceivingCall(false)
         setSession(null)
@@ -118,6 +126,7 @@ const App = () => {
   const answerCall = () => {
     console.log('trying to answer')
     session.answer(options)
+    console.log('answer?')
   }
 
   const rejectOrHangupCall = () => {
@@ -130,7 +139,7 @@ const App = () => {
   return (
     <View style={style.defaultView}>
       <View style={{borderLeftWidth: 5, borderColor: registered ? 'royalblue' : connected ? 'limegreen' : 'crimson'}}>
-        <Text style={style.text}>{isReceivingCall ? 'someone is calling you' : 'proto app'}</Text>
+        <Text style={style.text}>{isReceivingCall ? 'someone is calling you' : isInCall ? 'call answered' : 'proto app'}</Text>
       </View>
       {isReceivingCall && (<View style={style.contentView}>
         <CustomButton action={answerCall} text={isInCall ? 'open' : 'answer'} color='limegreen' />
